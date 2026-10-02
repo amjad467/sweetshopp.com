@@ -27,6 +27,8 @@ RUN chmod -R 777 /var/www/storage /var/www/bootstrap/cache
 
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 RUN chmod -R 777 /var/www/storage /var/www/bootstrap/cache
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
 EXPOSE 80
 
 CMD service nginx start && php-fpm
