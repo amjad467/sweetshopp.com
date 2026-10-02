@@ -1,4 +1,5 @@
 <?php
+<?php
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -11,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // ۱. ناسیاری ڕاستەوخۆ بۆ SSL/HTTPS لەسەر Render
+        $middleware->trustProxies(at: '*');
+
+        // ۲. Aliasەکانی هەبووت
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
