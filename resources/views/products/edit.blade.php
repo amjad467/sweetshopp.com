@@ -1,0 +1,1 @@
+@extends('layouts.app') @section('content')<h1 class="text-2xl font-black mb-5">دەستکاریکردنی {{$product->name}}</h1><div class="card p-6"><form method="POST" action="{{route('products.update',$product)}}">@csrf @method('PUT') @include('products.form')<button class="mt-6 bg-slate-900 text-white px-6 py-3 rounded-xl">نوێکردنەوە</button></form></div>@endsection

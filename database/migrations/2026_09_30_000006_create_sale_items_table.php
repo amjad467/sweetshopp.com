@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void { Schema::create('sale_items',function(Blueprint $t){$t->id();$t->foreignId('sale_id')->constrained()->cascadeOnDelete();$t->foreignId('product_id')->constrained()->restrictOnDelete();$t->decimal('quantity',12,3);$t->unsignedBigInteger('quantity_grams');$t->decimal('unit_price',14,2);$t->decimal('cost_price',14,2);$t->decimal('discount',14,2)->default(0);$t->decimal('subtotal',14,2);$t->decimal('profit',14,2)->default(0);$t->timestamps();$t->index(['sale_id','product_id']);}); } public function down(): void { Schema::dropIfExists('sale_items'); } };

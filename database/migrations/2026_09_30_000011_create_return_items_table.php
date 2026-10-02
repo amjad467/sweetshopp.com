@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration { public function up(): void { Schema::create('return_items',function(Blueprint $t){$t->id();$t->foreignId('return_id')->constrained('returns')->cascadeOnDelete();$t->foreignId('sale_item_id')->constrained()->restrictOnDelete();$t->foreignId('product_id')->constrained()->restrictOnDelete();$t->unsignedBigInteger('quantity_grams');$t->decimal('amount',14,2);$t->timestamps();}); } public function down(): void { Schema::dropIfExists('return_items'); } };
