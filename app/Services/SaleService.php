@@ -19,17 +19,15 @@ class SaleService
                 abort_if(! $p->is_active, 422, 'بەرهەم چالاک نییە.');
 
                 $grams = (int) $line['quantity_grams'];
+                // POS quantity بۆ کاڵای کێشی بە کیلۆگرامە (grams / 1000)، بۆ دانە ژمارەی دانەیە.
                 $quantity = (float) $line['quantity'];
-
-                // بۆ piece، quantity_grams وەک ژمارەی دانە بەکاردێت بۆ ئەوەی stock ledger یەک بنەما هەبێت.
                 $stockRequired = $p->unit_type === 'piece' ? (int) ceil($quantity) : $grams;
                 if ($p->current_stock_grams < $stockRequired) {
                     throw ValidationException::withMessages(['items' => 'کۆگای ' . $p->name . ' بەشی پێویست نییە.']);
                 }
 
-                $unitPrice = $p->unit_type === 'piece'
-                    ? (float) $p->selling_price_per_kg
-                    : (float) $p->selling_price_per_kg / 1000;
+                // نرخ بۆ کاڵای کێشی نرخ/کیلۆگرامە و quantity بە کیلۆگرامە؛ بۆ دانەش نرخ/دانەیە.
+                $unitPrice = (float) $p->selling_price_per_kg;
                 $lineTotal = round($quantity * $unitPrice, 2);
                 $subtotal += $lineTotal;
                 $items[] = [$p, $line, $stockRequired, $unitPrice, $lineTotal];
@@ -110,6 +108,19 @@ class SaleService
                 ]);
             }
 
+            // Ledger standard: قەرزی فرۆشتن بە کۆی پسوڵە تۆمار دەکرێت؛ پارەی وەرگیراو جیاواز کەم دەکرێتەوە.
+            if ($sale->customer_id && $total > 0) {
+                DebtTransaction::create([
+                    'customer_id' => $sale->customer_id,
+                    'sale_id' => $sale->id,
+                    'type' => 'debt',
+                    'amount' => $total,
+                    'description' => 'کۆی فرۆشتن',
+                    'user_id' => $userId,
+                    'transaction_date' => now(),
+                ]);
+            }
+
             if ($paid > 0) {
                 $payment = Payment::create([
                     'customer_id' => $sale->customer_id,
@@ -119,30 +130,18 @@ class SaleService
                     'payment_method' => $data['payment_method'] ?? 'cash',
                     'payment_date' => now(),
                 ]);
-                if ($sale->customer_id && $debt > 0) {
+                if ($sale->customer_id) {
                     DebtTransaction::create([
                         'customer_id' => $sale->customer_id,
                         'sale_id' => $sale->id,
                         'payment_id' => $payment->id,
                         'type' => 'payment',
                         'amount' => $paid,
-                        'description' => 'پارەدانی بەشی فرۆشتن',
+                        'description' => 'پارەی وەرگیراو لە فرۆشتن',
                         'user_id' => $userId,
                         'transaction_date' => now(),
                     ]);
                 }
-            }
-
-            if ($debt > 0) {
-                DebtTransaction::create([
-                    'customer_id' => $sale->customer_id,
-                    'sale_id' => $sale->id,
-                    'type' => 'debt',
-                    'amount' => $debt,
-                    'description' => 'قەرزی فرۆشتن',
-                    'user_id' => $userId,
-                    'transaction_date' => now(),
-                ]);
             }
 
             return $sale->load('items.product', 'customer', 'payments');

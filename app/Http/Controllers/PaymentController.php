@@ -10,9 +10,14 @@ class PaymentController extends Controller
 {
     public function debts()
     {
-        $customers = Customer::with('debtTransactions')->get()
-            ->filter(fn ($c) => $c->balance > 0)
-            ->sortByDesc('balance')->values();
+        $customers = Customer::query()->get()
+            ->map(function ($customer) {
+                $customer->setAttribute('current_balance', $customer->balance);
+                return $customer;
+            })
+            ->filter(fn ($customer) => $customer->current_balance > 0)
+            ->sortByDesc('current_balance')->values();
+
         return view('debts.index', compact('customers'));
     }
 

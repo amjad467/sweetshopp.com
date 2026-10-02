@@ -10,22 +10,14 @@ class Customer extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name',
-        'phone',
-        'address',
-        'opening_balance',
-        'credit_limit',
-        'notes',
-        'is_active',
+        'name', 'phone', 'address', 'opening_balance', 'credit_limit', 'notes', 'is_active',
     ];
 
     protected $casts = [
         'opening_balance' => 'decimal:2',
-        'credit_limit'    => 'decimal:2',
-        'is_active'       => 'boolean',
+        'credit_limit' => 'decimal:2',
+        'is_active' => 'boolean',
     ];
-
-    /* ---------- Relations ---------- */
 
     public function sales()
     {
@@ -42,26 +34,19 @@ class Customer extends Model
         return $this->hasMany(DebtTransaction::class);
     }
 
-    /* ---------- Accessors ---------- */
-
     /**
-     * ئەم accessor‌ە باڵانسی ئێستای کڕیار ئەژمێرێت.
-     *
-     * گرنگ: $this->debtTransactions (بێ براکێت) بەکاردەهێنرێت
-     * بۆ ئەوەی eager-loaded data بەکاربهێنرێت و N+1 query نەبێت.
-     *
-     * - debt     → زیادکردن (قەرزی نوێ)
-     * - payment  → کەمکردنەوە (پارەدان)
-     * - adjustment → زیاد/کەم (گەڕاندنەوە یان ڕاستکردنەوە)
+     * Current balance is calculated from each sale's remaining debt_amount,
+     * opening balance, later debt payments (payments not tied to a sale),
+     * and return/adjustment transactions. This also handles old partial sales
+     * whose ledger accidentally recorded only the residual debt as a debt entry
+     * and the initial payment as another entry.
      */
     public function getBalanceAttribute(): float
     {
-        $transactions = $this->debtTransactions;
+        $salesDebt = (float) $this->sales()->sum('debt_amount');
+        $laterPayments = (float) $this->payments()->whereNull('sale_id')->sum('amount');
+        $adjustments = (float) $this->debtTransactions()->where('type', 'adjustment')->sum('amount');
 
-        $debts       = $transactions->where('type', 'debt')->sum('amount');
-        $payments    = $transactions->where('type', 'payment')->sum('amount');
-        $adjustments = $transactions->where('type', 'adjustment')->sum('amount');
-
-        return max(0, (float) $this->opening_balance + (float) $debts - (float) $payments + (float) $adjustments);
+        return max(0, round((float) $this->opening_balance + $salesDebt - $laterPayments + $adjustments, 2));
     }
 }
