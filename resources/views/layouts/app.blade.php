@@ -100,6 +100,7 @@
         table tbody tr { transition:background .15s ease; }
         table tbody tr:hover { background:#faf9ff; }
         .stat-icon { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; }
+        .empty-state { padding:2rem 1rem; text-align:center; color:#94a3b8; font-weight:800; border:1px dashed #e2e8f0; border-radius:1rem; background:#f8fafc; }
         .soft-scroll::-webkit-scrollbar { width:8px; height:8px; }
         .soft-scroll::-webkit-scrollbar-thumb { background:#d8d3e6; border-radius:20px; }
         @media (max-width: 1023px) {

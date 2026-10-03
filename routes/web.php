@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
 
     // POS & Sales
     Route::get('/pos', [PosController::class, 'index'])->name('pos');
+    Route::get('/pos/search', [PosController::class, 'search'])->middleware('throttle:120,1')->name('pos.search');
     Route::post('/pos', [PosController::class, 'store'])->middleware('throttle:60,1')->name('pos.store');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
@@ -64,7 +65,7 @@ Route::middleware('auth')->group(function () {
         
         // Backup
         Route::get('/backup', [BackupController::class, 'index'])->name('backup.index');
-        Route::post('/backup', [BackupController::class, 'create'])->name('backup.create');
+        Route::post('/backup', [BackupController::class, 'create'])->middleware('throttle:3,10')->name('backup.create');
         Route::get('/backup/download/{file}', [BackupController::class, 'download'])->name('backup.download');
         Route::delete('/backup/{file}', [BackupController::class, 'destroy'])->name('backup.destroy');
         
